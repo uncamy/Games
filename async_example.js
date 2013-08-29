@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 
 /* this program aims to pull down a list of urls, process them async
- and make a list of agencies by parent_id*/
+ and make a list of agencies by parent_id using*/
 
 
 var request = require('request');
