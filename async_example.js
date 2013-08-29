@@ -8,13 +8,21 @@ var request = require('request');
 var async = require('async');
 var uu =require('underscore');
 
-/* 2. Parse data and pull out parent_id */
-function agen_data2agenName_parentId(agen_data){
+
+var _data = {};
+var DEBUG = false;
+var log = function(xx) {
+    if(DEBUG) {
+	console.log("%s at %s", xx, new Date());
+    }
+};
+
+function agen_data2agenName_parentId (agen_data){
+    log(arguments.callee.name);
     var notUndefined = function(xx) {return !uu.isUndefined(xx);};
     var agenName = uu.filter(uu.pluck(agen_data, 'name'), notUndefined);
     var parentId = uu.filter(uu.pluck(agen_data, 'parent_id'), notUndefined);
-
-    return {'agenName': agenName, 'parentId': parentId};
+    return {"agenName": agenName, "parentId": parentId};
 }
 
 function agen_datas2parentId_to_names(agen_datas, cb){
@@ -34,24 +42,22 @@ function agen_datas2parentId_to_names(agen_datas, cb){
     cb(null, parentId_to_names);
 }
 
-
-/* 3. Download agency URLs and convert JSON to internal data */
-function agen_url2agen_data(agen_url, cb) {
+/* 3.  Pull down all the agency urls */
+function agen_url2agen_data(agen_url, cb){
     log(arguments.callee.name);
-    var err_resp_body2agen_data = function(err, resp, body) {
-	if(!err && resp.statusCode == 200) {
+    var err_resp_body2agen_data = function(error, response, body) {
+	if (!error && response.statusCode == 200) {
 	    var agen_data = JSON.parse(body);
 	    cb(null, agen_data);
-	}
-     };
-     request(agen_url, err_resp_body2agen_data);
+	    }
+    };
+    request(agen_url, err_resp_body2agen_data);
 }
 
 //apply function in parallel to all agen_urls and send to callback
 function agen_urls2agen_datas(agen_urls, cb) {
     log(arguments.callee.name);
-    var num_simultaneous_downloads =50;
-    async.mapLimit(agen_urls,num_simultaneous_downloads,  agen_url2agen_data, cb);
+    async.mapLimit(agen_urls, agen_url2agen_data, cb);
 }
 
 /* 4. Bring in parsed data from URL to create agency URLs */
@@ -65,8 +71,8 @@ function register_data2agen_urls(register_data, cb) {
 /* 5. Pull down the body and parse JSON into a data structure (register_data) */
 function register_url2register_data(register_url, cb){
     log(arguments.callee.name);
-    var err_resp_body2register_data = function(err, resp, body) {
-	if (!err && resp.statusCode == 200) {
+    var err_resp_body2register_data = function(error, response, body) {
+	if (!error && response.statusCode == 200) {
 	    var register_data = JSON.parse(body);
 	    cb(null, register_data);
 	    }
@@ -75,9 +81,9 @@ function register_url2register_data(register_url, cb){
 }
 
 /*bringing it together w/ async compose*/
-function parentId_to_names2console(err, parentId_to_names) {
+function parentId_to_names2console(parentId_to_names) {
     log(arguments.callee.name);
-    console.log(JSON.stringify(parentID_to_names, null, 2));
+    console.log(JSON.stringify(parentId_to_names, null));
 }
 //forces all request to complete before subsequence code was executed
 var register_url2console = async.compose(agen_datas2parentId_to_names,
